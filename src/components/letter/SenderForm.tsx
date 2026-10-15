@@ -1,7 +1,13 @@
-import { useLetterStore, senderFromCV } from '../../store/useLetterStore';
-import { useCVStore } from '../../store/useCVStore';
-import type { LetterSender } from '../../types/letter';
-import { ImageUpload, RangeField, TextField } from './fields';
+import { RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
+import { useLetterStore, senderFromCV } from '@/store/useLetterStore';
+import { useCVStore } from '@/store/useCVStore';
+import { ImageUpload, RangeField, TextField } from '@/components/common/fields';
+import { SectionHint } from '@/components/common/ItemCard';
+import { useConfirm } from '@/components/app/ConfirmProvider';
+import { Button } from '@/components/ui/button';
+import { FieldGroup, FieldLegend, FieldSeparator, FieldSet } from '@/components/ui/field';
+import type { LetterSender } from '@/types/letter';
 
 const FIELDS: { key: keyof LetterSender; label: string; placeholder: string; rows?: number }[] = [
   { key: 'fullName', label: 'Nom complet', placeholder: 'Jean Dupont' },
@@ -14,30 +20,54 @@ const FIELDS: { key: keyof LetterSender; label: string; placeholder: string; row
 export function SenderForm() {
   const { profile, updateProfile } = useLetterStore();
   const personalInfo = useCVStore((s) => s.data.personalInfo);
+  const confirm = useConfirm();
   const { sender } = profile;
 
-  const update = (key: keyof LetterSender, value: string) =>
-    updateProfile({ sender: { ...sender, [key]: value } });
+  const update = (key: keyof LetterSender, value: string) => updateProfile({ sender: { ...sender, [key]: value } });
+
+  const importFromCV = async () => {
+    const ok = await confirm({
+      title: 'Reprendre les coordonnées du CV ?',
+      description: 'Vos coordonnées d’expéditeur actuelles seront remplacées par celles saisies dans le CV.',
+      confirmLabel: 'Remplacer',
+    });
+    if (ok) {
+      updateProfile({ sender: senderFromCV(personalInfo) });
+      toast.success('Coordonnées reprises du CV');
+    }
+  };
 
   return (
-    <div className="space-y-4">
-      <p className="text-xs text-slate-500">
-        Ces informations sont communes à toutes vos lettres.
-      </p>
+    <FieldGroup className="gap-6">
+      <SectionHint>Ces informations sont communes à toutes vos lettres.</SectionHint>
 
-      <ImageUpload label="Logo" value={profile.logo} onChange={(logo) => updateProfile({ logo })} />
-      {profile.logo && (
-        <RangeField
-          label="Hauteur du logo"
-          value={profile.logoHeight}
-          min={8}
-          max={40}
-          unit="mm"
-          onChange={(logoHeight) => updateProfile({ logoHeight })}
-        />
-      )}
+      <FieldSet className="gap-4">
+        <FieldLegend variant="label">Logo</FieldLegend>
+        <ImageUpload label="Image" value={profile.logo} onChange={(logo) => updateProfile({ logo })} />
+        {profile.logo && (
+          <RangeField
+            label="Hauteur du logo"
+            value={profile.logoHeight}
+            min={8}
+            max={40}
+            unit="mm"
+            onChange={(logoHeight) => updateProfile({ logoHeight })}
+          />
+        )}
+      </FieldSet>
 
-      <div className="space-y-3">
+      <FieldSeparator />
+
+      <FieldSet className="gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <FieldLegend variant="label" className="mb-0">
+            Coordonnées
+          </FieldLegend>
+          <Button type="button" variant="ghost" size="xs" onClick={importFromCV} className="text-muted-foreground">
+            <RotateCcw />
+            Reprendre du CV
+          </Button>
+        </div>
         {FIELDS.map(({ key, label, placeholder, rows }) => (
           <TextField
             key={key}
@@ -48,19 +78,7 @@ export function SenderForm() {
             rows={rows}
           />
         ))}
-      </div>
-
-      <button
-        type="button"
-        onClick={() => {
-          if (confirm('Remplacer vos coordonnées par celles du CV ?')) {
-            updateProfile({ sender: senderFromCV(personalInfo) });
-          }
-        }}
-        className="text-xs font-medium text-blue-600 hover:text-blue-700"
-      >
-        ↺ Reprendre les coordonnées du CV
-      </button>
-    </div>
+      </FieldSet>
+    </FieldGroup>
   );
 }

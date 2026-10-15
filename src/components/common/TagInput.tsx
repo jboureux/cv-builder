@@ -1,4 +1,6 @@
 import { useState, useRef, type KeyboardEvent } from 'react';
+import { X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface Props {
   tags: string[];
@@ -33,23 +35,24 @@ export function TagInput({ tags, onChange, placeholder = 'Ajouter...' }: Props) 
 
   return (
     <div
-      className="flex flex-wrap gap-1 p-2 border border-slate-200 rounded-md bg-white min-h-9 cursor-text"
+      className="flex min-h-8 w-full cursor-text flex-wrap items-center gap-1 rounded-lg border border-input bg-transparent px-1.5 py-1 transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30"
       onClick={() => inputRef.current?.focus()}
     >
       {tags.map((tag, i) => (
-        <span
-          key={i}
-          className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs"
-        >
+        <Badge key={i} variant="secondary" className="h-6 gap-0.5 rounded-md pr-0.5 pl-2 font-normal">
           {tag}
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); removeTag(i); }}
-            className="text-slate-400 hover:text-slate-700 leading-none"
+            aria-label={`Retirer ${tag}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              removeTag(i);
+            }}
+            className="flex size-4 items-center justify-center rounded-sm text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
           >
-            ×
+            <X className="size-3" />
           </button>
-        </span>
+        </Badge>
       ))}
       <input
         ref={inputRef}
@@ -58,7 +61,7 @@ export function TagInput({ tags, onChange, placeholder = 'Ajouter...' }: Props) 
         onKeyDown={handleKey}
         onBlur={addTag}
         placeholder={tags.length === 0 ? placeholder : ''}
-        className="flex-1 min-w-24 outline-none text-sm bg-transparent placeholder-slate-400"
+        className="h-6 min-w-24 flex-1 bg-transparent px-1 text-sm outline-none placeholder:text-muted-foreground"
       />
     </div>
   );

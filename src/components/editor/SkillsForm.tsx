@@ -1,52 +1,62 @@
-import { useCVStore } from '../../store/useCVStore';
-import { TagInput } from '../ui/TagInput';
-import type { SkillCategory } from '../../types/cv';
+import { Trash2 } from 'lucide-react';
+import { useCVStore } from '@/store/useCVStore';
+import { TagInput } from '@/components/common/TagInput';
+import { AddButton } from '@/components/common/ItemCard';
+import { useConfirm } from '@/components/app/ConfirmProvider';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import type { SkillCategory } from '@/types/cv';
 
 export function SkillsForm() {
   const { data, addSkillCategory, updateSkillCategory, removeSkillCategory } = useCVStore();
+  const confirm = useConfirm();
 
-  const add = () =>
-    addSkillCategory({ id: crypto.randomUUID(), name: '', skills: [] });
+  const add = () => addSkillCategory({ id: crypto.randomUUID(), name: '', skills: [] });
 
-  const update = (id: string, key: keyof SkillCategory, value: unknown) => {
-    const cat = data.skillCategories.find((c) => c.id === id)!;
-    updateSkillCategory(id, { ...cat, [key]: value });
+  const update = (cat: SkillCategory, patch: Partial<SkillCategory>) => updateSkillCategory(cat.id, { ...cat, ...patch });
+
+  const remove = async (cat: SkillCategory) => {
+    if (cat.skills.length === 0 && !cat.name) return removeSkillCategory(cat.id);
+    const ok = await confirm({
+      title: 'Supprimer cette catégorie ?',
+      description: `« ${cat.name || 'Sans nom'} » et ses ${cat.skills.length} compétence(s) seront retirées du CV.`,
+      confirmLabel: 'Supprimer',
+      destructive: true,
+    });
+    if (ok) removeSkillCategory(cat.id);
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       {data.skillCategories.map((cat) => (
-        <div key={cat.id} className="border border-slate-200 rounded-lg bg-white p-3 space-y-2">
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
+        <div key={cat.id} className="group/cat space-y-2 rounded-xl border bg-card p-3 shadow-xs">
+          <div className="flex items-center gap-1">
+            <Input
               value={cat.name}
-              onChange={(e) => update(cat.id, 'name', e.target.value)}
-              placeholder="Ex: Langages, Frameworks..."
-              className="flex-1 px-2.5 py-1.5 text-sm font-medium border border-slate-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 bg-white"
+              onChange={(e) => update(cat, { name: e.target.value })}
+              placeholder="Langages, Frameworks…"
+              aria-label="Nom de la catégorie"
+              className="border-transparent px-1.5 font-medium shadow-none hover:border-input dark:bg-transparent"
             />
-            <button
+            <Button
               type="button"
-              onClick={() => removeSkillCategory(cat.id)}
-              className="text-slate-300 hover:text-red-400 text-lg leading-none px-1"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Supprimer la catégorie"
+              onClick={() => remove(cat)}
+              className="text-muted-foreground opacity-0 group-hover/cat:opacity-100 hover:text-destructive focus-visible:opacity-100"
             >
-              ×
-            </button>
+              <Trash2 />
+            </Button>
           </div>
           <TagInput
             tags={cat.skills}
-            onChange={(skills) => update(cat.id, 'skills', skills)}
+            onChange={(skills) => update(cat, { skills })}
             placeholder="Ajouter une compétence (Entrée)"
           />
         </div>
       ))}
-      <button
-        type="button"
-        onClick={add}
-        className="w-full py-2 text-sm text-blue-600 hover:text-blue-700 border border-dashed border-blue-300 hover:border-blue-400 rounded-lg transition-colors font-medium"
-      >
-        + Ajouter une catégorie
-      </button>
+      <AddButton onClick={add}>Ajouter une catégorie</AddButton>
     </div>
   );
 }

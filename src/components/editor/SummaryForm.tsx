@@ -1,24 +1,32 @@
-import { useCVStore } from '../../store/useCVStore';
+import { useCVStore } from '@/store/useCVStore';
+import { TextField } from '@/components/common/fields';
+import { FieldLegend, FieldSet } from '@/components/ui/field';
+import { cn } from '@/lib/utils';
 
 export function SummaryForm() {
   const { data, setSummary } = useCVStore();
+  const length = data.summary.length;
+  const inRange = length >= 200 && length <= 400;
 
   return (
-    <div>
-      <label className="block text-xs font-medium text-slate-500 mb-1">
-        Résumé professionnel
-        <span className="ml-2 text-slate-400 font-normal">(affiché sous le titre)</span>
-      </label>
-      <textarea
+    <FieldSet className="gap-3">
+      <FieldLegend variant="label">Résumé professionnel</FieldLegend>
+      <TextField
+        label="Accroche"
+        hint="affichée sous le titre"
         value={data.summary}
-        onChange={(e) => setSummary(e.target.value)}
+        onChange={setSummary}
         rows={6}
         placeholder="Tech Lead avec X ans d'expérience..."
-        className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 bg-white resize-y"
+        description={
+          <>
+            <span className={cn('font-medium tabular-nums', inRange ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground')}>
+              {length} caractères
+            </span>{' '}
+            — idéalement entre 200 et 400
+          </>
+        }
       />
-      <p className="mt-1 text-xs text-slate-400">
-        {data.summary.length} caractères — idéalement entre 200 et 400
-      </p>
-    </div>
+    </FieldSet>
   );
 }

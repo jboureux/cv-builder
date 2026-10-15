@@ -1,14 +1,16 @@
-import { useLetterStore } from '../../store/useLetterStore';
-import { ImageUpload, RangeField } from './fields';
+import { useLetterStore } from '@/store/useLetterStore';
+import { ImageUpload, RangeField } from '@/components/common/fields';
+import { SectionHint } from '@/components/common/ItemCard';
 
 export function SignatureForm() {
   const { profile, updateProfile } = useLetterStore();
 
   return (
-    <div className="space-y-4">
-      <p className="text-xs text-slate-500">
-        Importez une photo ou un scan de votre signature. Elle est commune à toutes vos lettres et s'affiche au-dessus de votre nom.
-      </p>
+    <div className="space-y-5">
+      <SectionHint>
+        Importez une photo ou un scan de votre signature. Elle est commune à toutes vos lettres et s'affiche au-dessus de
+        votre nom.
+      </SectionHint>
       <ImageUpload
         label="Signature"
         value={profile.signature}
