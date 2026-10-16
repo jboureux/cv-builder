@@ -1,0 +1,49 @@
+version: '3'
+
+# Optional: put APP_HOST / TRAEFIK_* in a .env file to avoid passing them each time.
+dotenv: ['.env']
+
+vars:
+  HOST: '{{.HOST | default .APP_HOST}}'
+  TRAEFIK_NETWORK: '{{.TRAEFIK_NETWORK}}'
+  TRAEFIK_ENTRYPOINT: '{{.TRAEFIK_ENTRYPOINT | default "websecure"}}'
+  TRAEFIK_CERTRESOLVER: '{{.TRAEFIK_CERTRESOLVER | default "letsencrypt"}}'
+
+# Task CLI vars are not exported to commands: forward them to docker compose.
+env:
+  TRAEFIK_NETWORK: '{{.TRAEFIK_NETWORK}}'
+  TRAEFIK_ENTRYPOINT: '{{.TRAEFIK_ENTRYPOINT}}'
+  TRAEFIK_CERTRESOLVER: '{{.TRAEFIK_CERTRESOLVER}}'
+
+tasks:
+  prod:
+    desc: Build and start the app in production behind Traefik (task prod HOST=cv.example.com)
+    preconditions:
+      - sh: '[ -n "{{.HOST}}" ]'
+        msg: 'HOST is required: task prod HOST=cv.example.com (or APP_HOST in .env)'
+      - sh: docker network inspect {{.TRAEFIK_NETWORK}} >/dev/null 2>&1
+        msg: 'Docker network "{{.TRAEFIK_NETWORK}}" not found: start Traefik first or set TRAEFIK_NETWORK'
+    env:
+      APP_HOST: '{{.HOST}}'
+    cmds:
+      - docker compose up -d --build --remove-orphans
+      - docker image prune -f
+      - echo "Deployed on https://{{.HOST}}"
+
+  prod:down:
+    env: { APP_HOST: '{{.HOST | default "unset.invalid"}}' }
+    desc: Stop the production stack
+    cmds:
+      - docker compose down
+
+  prod:logs:
+    env: { APP_HOST: '{{.HOST | default "unset.invalid"}}' }
+    desc: Follow production logs
+    cmds:
+      - docker compose logs -f app
+
+  prod:build:
+    env: { APP_HOST: '{{.HOST | default "unset.invalid"}}' }
+    desc: Build the production image without starting it
+    cmds:
+      - docker compose build

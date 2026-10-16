@@ -1,0 +1,12 @@
+# Never ship host node_modules: native bindings (rolldown, lightningcss,
+# tailwind oxide) are platform-specific and must be installed in the image.
+node_modules
+dist
+.git
+.DS_Store
+*.log
+.env
+.env.*
+Dockerfile
+compose.yaml
+Taskfile.yml
